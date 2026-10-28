@@ -9,3 +9,6 @@ node_modules
 .qodo
 .node
 .tmp
+
+# build output
+build
