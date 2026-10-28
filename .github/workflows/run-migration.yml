@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check the inputs
-        shell: pwsh
+        shell: powershell
         env:
           SQL_FILE: ${{ inputs.sql_file }}
           ENV_FILE: ${{ inputs.env_file }}
