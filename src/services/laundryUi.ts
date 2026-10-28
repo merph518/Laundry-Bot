@@ -93,9 +93,6 @@ export function buildLaundryDisplayPayload(
   if (summary.statusLine) {
     statusLines.push(summary.statusLine);
   }
-  if (!statusLines.length) {
-    statusLines.push("Laundry status update.");
-  }
 
   containerComponents.push(buildTextDisplay(statusLines.join("\n\n")));
 

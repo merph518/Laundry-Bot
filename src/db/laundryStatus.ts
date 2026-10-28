@@ -134,7 +134,7 @@ export async function markLaundryStarted(
     );
 
     if (channelId) {
-      const insertResult = await connection.execute<{ ID: number }>(
+      const insertResult = await connection.execute<{ id: number[] }>(
         `INSERT INTO LAUNDRY_NOTIFICATIONS (
           CHANNEL_ID,
           MESSAGE,
@@ -164,7 +164,7 @@ export async function markLaundryStarted(
         },
       );
 
-      const rows = insertResult.outBinds?.ID;
+      const rows = insertResult.outBinds?.id;
       if (Array.isArray(rows) && rows.length > 0) {
         notificationId = Number(rows[0]);
       }
