@@ -63,7 +63,7 @@ docker compose up -d
 ```
 
 This runs two services:
-- `bot` the LaundryBot container, pulling `ghcr.io/mfagerstrom/laundrybot:latest`
+- `bot` the LaundryBot container, pulling `ghcr.io/merph518/laundry-bot:latest`
 - `watchtower` (the maintained `nickfedor/watchtower` fork) polls for new image versions every
   5 minutes and auto-updates the running container
 

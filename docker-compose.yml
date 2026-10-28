@@ -1,6 +1,6 @@
 services:
   bot:
-    image: ghcr.io/mfagerstrom/laundrybot:latest
+    image: ghcr.io/merph518/laundry-bot:latest
     env_file: .env
     extra_hosts:
       - "host.docker.internal:host-gateway"
