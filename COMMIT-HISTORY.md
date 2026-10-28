@@ -1,3 +1,5 @@
+2026-10-28 - Commit ID: 3181352 - fix: keep pollers from crashing, overlapping, or outliving shutdown (#6)
+2026-10-28 - Commit ID: 828e79e - chore: refresh COMMIT-HISTORY.md for issue 5 branch
 2026-10-28 - Commit ID: 45fb11a - fix: insert first-time users into LAUNDRY_USERS before starting a cycle (#5)
 2026-10-28 - Commit ID: 3004c40 - docs: implement extension names the CI lint and compile checks (#2)
 2026-10-28 - Commit ID: 049b25c - feat: vendor Overmind skills at v0.13.0 with LaundryBot extensions (#2)
