@@ -1,9 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import type { Client } from "discord.js";
+import { HEARTBEAT_FILE, HEARTBEAT_INTERVAL_MS } from "../config.js";
 import { startPoller, type StopPoller } from "./poller.js";
-
-export const HEARTBEAT_FILE = process.env.HEARTBEAT_FILE ?? "/tmp/laundrybot.heartbeat";
-const HEARTBEAT_INTERVAL_MS = 30_000;
 
 /**
  * Touches the heartbeat file while the Discord client is ready. The container healthcheck reads its
