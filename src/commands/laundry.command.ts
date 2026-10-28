@@ -39,8 +39,10 @@ export class LaundryCommand {
   })
   async laundry(interaction: CommandInteraction): Promise<void> {
     await runInteraction(interaction, { isPrivate: false }, async () => {
-      const statusRow = await getLaundryStatus();
-      const helpRequests = await getActiveHelpRequests();
+      const [statusRow, helpRequests] = await Promise.all([
+        getLaundryStatus(),
+        getActiveHelpRequests(),
+      ]);
       const { components: displayComponents, files } = buildLaundryDisplayPayload(
         statusRow,
         helpRequests,
