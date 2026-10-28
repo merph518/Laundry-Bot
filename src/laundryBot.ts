@@ -4,17 +4,19 @@ import { IntentsBitField } from "discord.js";
 import { Client } from "discordx";
 import { startLaundryNotificationPoller } from "./services/laundryNotifications.js";
 import { startLaundryPresencePoller, updateLaundryPresence } from "./services/laundryPresence.js";
+import type { StopPoller } from "./services/poller.js";
 
 export const bot: Client = new Client({
   intents: [IntentsBitField.Flags.Guilds],
   silent: false,
 });
 
+const stopPollers: StopPoller[] = [];
+
 bot.once("clientReady", async () => {
   await bot.guilds.fetch();
   await bot.initApplicationCommands();
-  startLaundryNotificationPoller(bot);
-  startLaundryPresencePoller(bot);
+  stopPollers.push(startLaundryNotificationPoller(bot), startLaundryPresencePoller(bot));
   await updateLaundryPresence(bot);
   console.log("LaundryBot online.");
 });
@@ -36,4 +38,22 @@ async function run(): Promise<void> {
   await bot.login(token);
 }
 
-void run();
+function shutdown(signal: string): void {
+  console.log(`Received ${signal}, shutting down.`);
+  for (const stop of stopPollers) {
+    stop();
+  }
+
+  void bot.destroy().finally(() => process.exit(0));
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection.", reason);
+});
+
+run().catch((error: unknown) => {
+  console.error("LaundryBot failed to start.", error);
+  process.exit(1);
+});

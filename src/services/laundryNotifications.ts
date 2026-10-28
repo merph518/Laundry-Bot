@@ -9,13 +9,14 @@ import {
 } from "../db/laundryStatus.js";
 import { deleteRecentLaundryMessage, sendLaundryStatusMessage } from "./laundryMessages.js";
 import { updateLaundryPresence } from "./laundryPresence.js";
+import { startPoller, type StopPoller } from "./poller.js";
 
 const POLL_INTERVAL_MS = 15_000;
 
-export function startLaundryNotificationPoller(client: Client): NodeJS.Timeout {
-  return setInterval(() => {
-    void processLaundryNotifications(client);
-  }, POLL_INTERVAL_MS);
+export function startLaundryNotificationPoller(client: Client): StopPoller {
+  return startPoller("laundry-notifications", POLL_INTERVAL_MS, () => (
+    processLaundryNotifications(client)
+  ));
 }
 
 export async function processLaundryNotifications(client: Client): Promise<void> {
