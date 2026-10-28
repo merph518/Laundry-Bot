@@ -1,3 +1,5 @@
+2026-10-28 - Commit ID: fc8b798 - chore: move to Node 24 LTS (#8)
+2026-10-28 - Commit ID: 4cb9bdb - chore: refresh COMMIT-HISTORY.md for fix/issue-7-eslint-config
 2026-10-28 - Commit ID: 91660fc - fix: make the ESLint rules apply to src and drop Playwright-only rules (#7)
 2026-10-28 - Commit ID: ff62a9e - chore: regenerate package-lock.json with npm 10 so CI npm ci passes (#5)
 2026-10-28 - Commit ID: 992c03a - chore: refresh COMMIT-HISTORY.md for fix/issue-6-pollers
