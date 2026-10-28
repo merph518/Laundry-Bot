@@ -1,22 +1,19 @@
 # LaundryBot
 
 LaundryBot is an intentionally simple Discord bot that helps my family of six communicate laundry
-status. It tracks the current cycle, posts a live status card, and lets users complete help tasks
-through buttons and select menus. The bot stores status and help requests in Oracle DB
-tables and updates its presence with the current laundry state.
+status. It tracks the current cycle and posts a live status card with buttons. The bot stores
+status in Oracle DB tables and updates its presence with the current laundry state.
 
 **Features**
 - `/laundry` slash command that posts the interactive status card.
 - "I Flipped It" and "Mark Laundry Completed" buttons to update status.
-- "I Helped" flow with a select menu for resolving help tasks.
 - Automatic notifications when a laundry cycle should be done.
 - Presence updates reflecting the current availability and ETA.
 
 **Core Flow**
 1. Run `/laundry` to post the status card in the laundry channel.
 2. Click "I Flipped It" to start a cycle and schedule a notification.
-3. If help requests are active, use "I Helped" to resolve them.
-4. The bot edits its presence and keeps the status card current.
+3. The bot edits its presence and keeps the status card current.
 
 **Project Structure**
 - `src/laundryBot.ts` entrypoint and Discord client setup.

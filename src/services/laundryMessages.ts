@@ -1,5 +1,4 @@
 import { type Client, MessageFlags, type TextBasedChannel } from "discord.js";
-import { getActiveHelpRequests, type LaundryHelpRequestRow } from "../db/laundryHelp.js";
 import { getLaundryStatus, type LaundryStatusRow } from "../db/laundryStatus.js";
 import { updateLaundryPresence } from "./laundryPresence.js";
 import {
@@ -17,13 +16,10 @@ export async function refreshLaundryCard(
   channel: TextBasedChannel,
   contentPrefix?: string,
 ): Promise<void> {
-  const [statusRow, helpRequests] = await Promise.all([
-    getLaundryStatus(),
-    getActiveHelpRequests(),
-  ]);
+  const statusRow = await getLaundryStatus();
 
   await deleteRecentLaundryMessage(channel, client.user?.id);
-  await sendLaundryStatusMessage(channel, statusRow, helpRequests, contentPrefix);
+  await sendLaundryStatusMessage(channel, statusRow, contentPrefix);
   await updateLaundryPresence(client);
 }
 
@@ -52,7 +48,6 @@ export async function deleteRecentLaundryMessage(
 export async function sendLaundryStatusMessage(
   channel: TextBasedChannel,
   statusRow: LaundryStatusRow | null,
-  helpRequests: LaundryHelpRequestRow[],
   contentPrefix?: string,
 ): Promise<void> {
   if (!("send" in channel)) {
@@ -61,10 +56,9 @@ export async function sendLaundryStatusMessage(
 
   const { components: displayComponents, files } = buildLaundryDisplayPayload(
     statusRow,
-    helpRequests,
     contentPrefix,
   );
-  const components = buildLaundryComponents(statusRow, helpRequests);
+  const components = buildLaundryComponents(statusRow);
 
   await channel.send({
     components: [...displayComponents, ...components],
