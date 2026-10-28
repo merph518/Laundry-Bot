@@ -7,12 +7,12 @@ import {
   SeparatorSpacingSize,
   StringSelectMenuBuilder,
 } from "discord.js";
-import path from "node:path";
 import { DateTime } from "luxon";
 import type {
   APIComponentInContainer,
   APIMessageTopLevelComponent,
 } from "discord.js";
+import { BANNER_DIR } from "../config.js";
 import type { LaundryHelpRequestRow } from "../db/laundryHelp.js";
 import { formatHelpRequests, getHelpRequestLabel } from "../db/laundryHelp.js";
 import type { LaundryStatusRow } from "../db/laundryStatus.js";
@@ -22,6 +22,13 @@ const LAUNDRY_BUTTON_ID = "laundry_flip";
 const HELP_DONE_BUTTON_ID = "laundry_help_done";
 const HELP_DONE_SELECT_ID = "laundry_help_done_select";
 const COMPLETE_BUTTON_ID = "laundry_complete";
+// Custom IDs of the buttons on the status card; the card is found again by matching these.
+export const LAUNDRY_COMPONENT_IDS: ReadonlySet<string> = new Set([
+  LAUNDRY_BUTTON_ID,
+  HELP_DONE_BUTTON_ID,
+  COMPLETE_BUTTON_ID,
+]);
+
 const IN_PROGRESS_BANNER = "laundry_in_progress_banner.png";
 const AVAILABLE_BANNER = "laundry_is_available_banner.png";
 
@@ -76,7 +83,7 @@ export function buildLaundryDisplayPayload(
       ? AVAILABLE_BANNER
       : null;
   const files = bannerFilename
-    ? [new AttachmentBuilder(path.resolve("src/assets/images", bannerFilename), {
+    ? [new AttachmentBuilder(`${BANNER_DIR}/${bannerFilename}`, {
       name: bannerFilename,
     })]
     : [];

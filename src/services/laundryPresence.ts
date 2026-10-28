@@ -1,10 +1,9 @@
 import { ActivityType, Client } from "discord.js";
 import { DateTime } from "luxon";
+import { PRESENCE_FORCE_REFRESH_INTERVAL_MS, PRESENCE_INTERVAL_MS } from "../config.js";
 import { buildLaundrySummary, getLaundryStatus } from "../db/laundryStatus.js";
 import { startPoller, type StopPoller } from "./poller.js";
 
-const PRESENCE_INTERVAL_MS = 30_000;
-const PRESENCE_FORCE_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
 let lastPresenceText = "";
 
 export function startLaundryPresencePoller(client: Client): StopPoller {

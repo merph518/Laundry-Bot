@@ -1,3 +1,5 @@
+2026-10-28 - Commit ID: 4d0201d - refactor: centralize interaction handling, card refresh, IDs and config (#12)
+2026-10-28 - Commit ID: b307d22 - chore: refresh COMMIT-HISTORY.md for fix/issue-18-image-name
 2026-10-28 - Commit ID: 71a6278 - fix: pull the image name the publish workflow produces (#18)
 2026-10-28 - Commit ID: 2269daf - chore: refresh COMMIT-HISTORY.md for ci/issue-11-modernize-ci
 2026-10-28 - Commit ID: 54e5762 - ci: gate publishing on checks, harden workflows, add a container healthcheck (#11)
