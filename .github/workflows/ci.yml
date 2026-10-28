@@ -38,6 +38,10 @@ jobs:
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run compile
 
+      - name: Unit tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm test
+
       - name: Vendored skills match the pin
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: bash scripts/overmind-check.sh

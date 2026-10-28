@@ -1,3 +1,5 @@
+2026-10-28 - Commit ID: 3a822d1 - test: add Vitest unit tests and run them in CI (#15)
+2026-10-28 - Commit ID: bfb1a5e - chore: refresh COMMIT-HISTORY.md for chore/issue-14-remove-help
 2026-10-28 - Commit ID: 8ce1582 - chore: remove the help-request feature and record cancelled notifications (#14)
 2026-10-28 - Commit ID: dd0a7b0 - chore: refresh COMMIT-HISTORY.md for perf/issue-13-oracle-pool
 2026-10-28 - Commit ID: 5a080fd - perf: use an Oracle connection pool instead of one connection per query (#13)
