@@ -4,7 +4,7 @@ import stylistic from "@stylistic/eslint-plugin";
 import eslintConfigPrettier from "eslint-config-prettier";
 
 export default [
-  { ignores: ["build/**"] },
+  { ignores: ["build/**", ".claude/**"] },
   eslintConfigPrettier,
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,

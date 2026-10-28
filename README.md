@@ -74,6 +74,17 @@ Place your `.env` file (see Environment Variables above) next to `docker-compose
 - `npm run watch` start a reload loop for local development.
 - `npm run buildProd` compile and restart the PM2 process.
 
+**Claude Code Skills**
+The `general` and `voice` skills come from [Overmind](https://github.com/merph518/Overmind),
+copied into `.claude/att-docs/` at the release that `.claude/att-docs.lock` pins. LaundryBot's own
+extensions of those skills live in `.claude/skills/`.
+- Never edit `.claude/att-docs/` by hand. `scripts/overmind-check.sh` fails when it differs from
+  the pin.
+- To move the pin, run `scripts/overmind-sync.sh <tag>`, commit the result, and open one pull
+  request for it.
+- `.claude/settings.json` turns off the user-level `general` plugin so only one copy of
+  `implement` loads.
+
 **Notes**
 - The status card uses Discord components v2; the bot sends messages with
   `MessageFlags.IsComponentsV2`.
