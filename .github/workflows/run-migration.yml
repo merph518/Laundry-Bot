@@ -1,0 +1,66 @@
+name: Run migration (on demand)
+
+# Runs one SQL file from db/ against the database named in an env file that already sits on
+# the Windows desktop runner, so no database login is stored in GitHub. The file is read on
+# the runner and its values are never printed.
+
+run-name: run-migration ${{ inputs.sql_file }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      sql_file:
+        description: 'SQL file to run, from the db folder.'
+        required: true
+        default: 'db/20261028_laundry_notifications_cancelled.sql'
+        type: string
+      env_file:
+        description: 'Full path of the .env file on the runner that holds the Oracle login.'
+        required: true
+        default: 'C:\code\personal\RPGClubBotTs\.env'
+        type: string
+
+permissions:
+  contents: read
+
+# Two migrations at once could race over the same tables.
+concurrency:
+  group: run-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: [self-hosted, Windows, ci]
+    timeout-minutes: 15
+    steps:
+      - name: Check the inputs
+        shell: pwsh
+        env:
+          SQL_FILE: ${{ inputs.sql_file }}
+          ENV_FILE: ${{ inputs.env_file }}
+        run: |
+          if ($env:SQL_FILE -notmatch '^db/[A-Za-z0-9_]+\.sql$') {
+            throw "sql_file must look like db/<name>.sql."
+          }
+          if (-not (Test-Path -LiteralPath $env:ENV_FILE -PathType Leaf)) {
+            throw "The env file was not found on this runner: $env:ENV_FILE"
+          }
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run the SQL file
+        env:
+          SQL_FILE: ${{ inputs.sql_file }}
+          ENV_FILE: ${{ inputs.env_file }}
+        run: npx tsx src/scripts/runSql.ts "$env:ENV_FILE" "$env:SQL_FILE"
