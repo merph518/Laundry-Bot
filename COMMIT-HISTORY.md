@@ -1,3 +1,5 @@
+2026-10-28 - Commit ID: 54e5762 - ci: gate publishing on checks, harden workflows, add a container healthcheck (#11)
+2026-10-28 - Commit ID: 2474878 - chore: refresh COMMIT-HISTORY.md for chore/issue-10-tsx
 2026-10-28 - Commit ID: a09692c - chore: run from source with tsx and drop the pm2-era scripts (#10)
 2026-10-28 - Commit ID: 04245b2 - chore: refresh COMMIT-HISTORY.md for chore/issue-9-deps
 2026-10-28 - Commit ID: 483d052 - chore: prune unused dependencies, move tooling to devDependencies (#9)
