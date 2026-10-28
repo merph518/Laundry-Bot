@@ -1,14 +1,27 @@
-import { MessageFlags, type TextBasedChannel } from "discord.js";
-import type { LaundryHelpRequestRow } from "../db/laundryHelp.js";
-import type { LaundryStatusRow } from "../db/laundryStatus.js";
-import { buildLaundryComponents, buildLaundryDisplayPayload } from "./laundryUi.js";
+import { type Client, MessageFlags, type TextBasedChannel } from "discord.js";
+import { getLaundryStatus, type LaundryStatusRow } from "../db/laundryStatus.js";
+import { updateLaundryPresence } from "./laundryPresence.js";
+import {
+  buildLaundryComponents,
+  buildLaundryDisplayPayload,
+  LAUNDRY_COMPONENT_IDS,
+} from "./laundryUi.js";
 
-const LAUNDRY_COMPONENT_IDS = new Set([
-  "laundry_flip",
-  "laundry_help",
-  "laundry_help_done",
-  "laundry_complete",
-]);
+/**
+ * Replaces the bot's last status card in `channel` with one built from the current database
+ * state, then brings the bot's presence in line with it.
+ */
+export async function refreshLaundryCard(
+  client: Client,
+  channel: TextBasedChannel,
+  contentPrefix?: string,
+): Promise<void> {
+  const statusRow = await getLaundryStatus();
+
+  await deleteRecentLaundryMessage(channel, client.user?.id);
+  await sendLaundryStatusMessage(channel, statusRow, contentPrefix);
+  await updateLaundryPresence(client);
+}
 
 export async function deleteRecentLaundryMessage(
   channel: TextBasedChannel,
@@ -35,7 +48,6 @@ export async function deleteRecentLaundryMessage(
 export async function sendLaundryStatusMessage(
   channel: TextBasedChannel,
   statusRow: LaundryStatusRow | null,
-  helpRequests: LaundryHelpRequestRow[],
   contentPrefix?: string,
 ): Promise<void> {
   if (!("send" in channel)) {
@@ -44,10 +56,9 @@ export async function sendLaundryStatusMessage(
 
   const { components: displayComponents, files } = buildLaundryDisplayPayload(
     statusRow,
-    helpRequests,
     contentPrefix,
   );
-  const components = buildLaundryComponents(statusRow, helpRequests);
+  const components = buildLaundryComponents(statusRow);
 
   await channel.send({
     components: [...displayComponents, ...components],

@@ -1,20 +1,16 @@
 import { Client } from "discordx";
-import { getActiveHelpRequests } from "../db/laundryHelp.js";
+import { NOTIFICATION_POLL_INTERVAL_MS } from "../config.js";
 import {
-  getLaundryStatus,
   getPendingLaundryNotifications,
   markLaundryCompleted,
   markLaundryNotificationFailed,
   markLaundryNotificationSent,
 } from "../db/laundryStatus.js";
-import { deleteRecentLaundryMessage, sendLaundryStatusMessage } from "./laundryMessages.js";
-import { updateLaundryPresence } from "./laundryPresence.js";
+import { refreshLaundryCard } from "./laundryMessages.js";
 import { startPoller, type StopPoller } from "./poller.js";
 
-const POLL_INTERVAL_MS = 15_000;
-
 export function startLaundryNotificationPoller(client: Client): StopPoller {
-  return startPoller("laundry-notifications", POLL_INTERVAL_MS, () => (
+  return startPoller("laundry-notifications", NOTIFICATION_POLL_INTERVAL_MS, () => (
     processLaundryNotifications(client)
   ));
 }
@@ -34,18 +30,8 @@ export async function processLaundryNotifications(client: Client): Promise<void>
       }
 
       await markLaundryCompleted();
-      const statusRow = await getLaundryStatus();
-      const helpRequests = await getActiveHelpRequests();
-
-      await deleteRecentLaundryMessage(channel, client.user?.id);
-      await sendLaundryStatusMessage(
-        channel,
-        statusRow,
-        helpRequests,
-        "Laundry cycle has been completed!",
-      );
+      await refreshLaundryCard(client, channel, "Laundry cycle has been completed!");
       await markLaundryNotificationSent(notification.ID);
-      await updateLaundryPresence(client);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       await markLaundryNotificationFailed(notification.ID, message);
