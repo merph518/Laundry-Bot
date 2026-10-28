@@ -17,11 +17,12 @@ status in Oracle DB tables and updates its presence with the current laundry sta
 
 **Project Structure**
 - `src/laundryBot.ts` entrypoint and Discord client setup.
+- `src/config.ts` shared constants such as the channel ID and poll intervals.
 - `src/commands` slash command and component handlers.
 - `src/services` UI, notifications, presence, and message helpers.
-- `src/db` Oracle data access and business logic.
+- `src/db` Oracle data access (connection pool) and business logic.
 - `db` SQL scripts for schema setup and updates.
-- `build` compiled output (do not edit directly).
+- `build` compiled output from `npm run build`; not committed.
 
 **Prerequisites**
 - Node.js `>=24` and npm `>=11` (see `package.json` engines).
@@ -33,6 +34,8 @@ status in Oracle DB tables and updates its presence with the current laundry sta
 - `ORACLE_USER` Oracle DB username.
 - `ORACLE_PASSWORD` Oracle DB password.
 - `ORACLE_CONNECT_STRING` Oracle connection string.
+- `HEARTBEAT_FILE` optional path of the container healthcheck file (default
+  `/tmp/laundrybot.heartbeat`).
 
 **Database**
 Table definitions live in the `db` directory. Apply the SQL files in order when setting up a fresh
@@ -74,6 +77,7 @@ Place your `.env` file (see Environment Variables above) next to `docker-compose
 - `npm run dev` run from source with tsx and reload on change.
 - `npm run lint` run ESLint.
 - `npm run compile` type-check only.
+- `npm test` run the Vitest unit tests.
 
 **Claude Code Skills**
 The `general` and `voice` skills come from [Overmind](https://github.com/merph518/Overmind),
