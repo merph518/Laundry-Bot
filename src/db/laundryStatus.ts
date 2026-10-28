@@ -318,12 +318,12 @@ export async function cancelPendingLaundryNotifications(
   await withOracleConnection(async (connection) => {
     await connection.execute(
       `UPDATE LAUNDRY_NOTIFICATIONS
-      SET STATUS = :failedStatus,
+      SET STATUS = :cancelledStatus,
         SENT_AT = :cancelledAt,
         NOTES = :notes
       WHERE STATUS = :pendingStatus`,
       {
-        failedStatus: NOTIFICATION_STATUS.FAILED,
+        cancelledStatus: NOTIFICATION_STATUS.CANCELLED,
         pendingStatus: NOTIFICATION_STATUS.PENDING,
         cancelledAt,
         notes: reason,

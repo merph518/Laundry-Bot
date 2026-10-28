@@ -5,7 +5,6 @@ import {
   ButtonStyle,
   ComponentType,
   SeparatorSpacingSize,
-  StringSelectMenuBuilder,
 } from "discord.js";
 import { DateTime } from "luxon";
 import type {
@@ -13,19 +12,14 @@ import type {
   APIMessageTopLevelComponent,
 } from "discord.js";
 import { BANNER_DIR } from "../config.js";
-import type { LaundryHelpRequestRow } from "../db/laundryHelp.js";
-import { formatHelpRequests, getHelpRequestLabel } from "../db/laundryHelp.js";
 import type { LaundryStatusRow } from "../db/laundryStatus.js";
 import { buildLaundrySummary } from "../db/laundryStatus.js";
 
 const LAUNDRY_BUTTON_ID = "laundry_flip";
-const HELP_DONE_BUTTON_ID = "laundry_help_done";
-const HELP_DONE_SELECT_ID = "laundry_help_done_select";
 const COMPLETE_BUTTON_ID = "laundry_complete";
 // Custom IDs of the buttons on the status card; the card is found again by matching these.
 export const LAUNDRY_COMPONENT_IDS: ReadonlySet<string> = new Set([
   LAUNDRY_BUTTON_ID,
-  HELP_DONE_BUTTON_ID,
   COMPLETE_BUTTON_ID,
 ]);
 
@@ -34,7 +28,6 @@ const AVAILABLE_BANNER = "laundry_is_available_banner.png";
 
 export function buildLaundryComponents(
   row: LaundryStatusRow | null,
-  helpRequests: LaundryHelpRequestRow[],
 ): ActionRowBuilder<ButtonBuilder>[] {
   const summary = buildLaundrySummary(row);
   const buttons: ButtonBuilder[] = [];
@@ -53,23 +46,14 @@ export function buildLaundryComponents(
       .setStyle(ButtonStyle.Secondary));
   }
 
-  if (helpRequests.length) {
-    buttons.push(new ButtonBuilder()
-      .setCustomId(HELP_DONE_BUTTON_ID)
-      .setLabel("I Helped")
-      .setStyle(ButtonStyle.Secondary));
-  }
-
   return [new ActionRowBuilder<ButtonBuilder>().addComponents(buttons)];
 }
 
 export function buildLaundryDisplayPayload(
   row: LaundryStatusRow | null,
-  helpRequests: LaundryHelpRequestRow[],
   contentPrefix?: string,
 ): { components: APIMessageTopLevelComponent[]; files: AttachmentBuilder[] } {
   const summary = buildLaundrySummary(row);
-  const helpRequestText = formatHelpRequests(helpRequests);
   const footerTime = buildFooterTime(summary.lastUpdatedDate, summary.lastUpdated);
   const isUnknownUpdater = summary.updatedByName === "Unknown";
   const footerText = summary.lastUpdated === "Not available"
@@ -115,11 +99,6 @@ export function buildLaundryDisplayPayload(
 
   containerComponents.push(buildTextDisplay(statusLines.join("\n\n")));
 
-  if (helpRequests.length) {
-    containerComponents.push(buildSeparator());
-    containerComponents.push(buildTextDisplay(`**Help Requests**\n${helpRequestText}`));
-  }
-
   containerComponents.push(buildSeparator());
   containerComponents.push(buildTextDisplay(`*${footerText}*`));
 
@@ -153,44 +132,8 @@ export function getLaundryButtonId(): string {
   return LAUNDRY_BUTTON_ID;
 }
 
-export function getHelpDoneButtonId(): string {
-  return HELP_DONE_BUTTON_ID;
-}
-
 export function getCompleteButtonId(): string {
   return COMPLETE_BUTTON_ID;
-}
-
-export function getHelpDoneSelectId(messageId: string): string {
-  return `${HELP_DONE_SELECT_ID}:${messageId}`;
-}
-
-export function parseHelpDoneSelectId(customId: string): string | null {
-  const [prefix, messageId] = customId.split(":");
-  if (prefix !== HELP_DONE_SELECT_ID || !messageId) {
-    return null;
-  }
-
-  return messageId;
-}
-
-export function buildHelpDoneSelectMenu(
-  messageId: string,
-  helpRequests: LaundryHelpRequestRow[],
-): ActionRowBuilder<StringSelectMenuBuilder> {
-  const select = new StringSelectMenuBuilder()
-    .setCustomId(getHelpDoneSelectId(messageId))
-    .setPlaceholder("Select help requests you completed")
-    .setMinValues(1)
-    .setMaxValues(helpRequests.length)
-    .addOptions(
-      helpRequests.map((request) => ({
-        label: `${request.USER_NAME}: ${getHelpRequestLabel(request.REQUEST_TYPE)}`,
-        value: String(request.ID),
-      })),
-    );
-
-  return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
 }
 
 function buildTextDisplay(content: string): APIComponentInContainer {
