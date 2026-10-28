@@ -1,3 +1,7 @@
+2026-07-17 - Commit ID: 81e236f - chore: fixed missing dependency
+2026-07-17 - Commit ID: d549b0a - chore: updated package lock
+2026-07-17 - Commit ID: 0c9ba48 - dockerized!
+2026-02-09 - Commit ID: f795fe3 - chore: removed help functionality
 2026-02-05 - Commit ID: 8ee276f - chore: updated readme
 2026-02-03 - Commit ID: 3ec8953 - fix: added service to keep the presence from expiring
 2026-02-03 - Commit ID: 278e809 - fix: recreated tables
