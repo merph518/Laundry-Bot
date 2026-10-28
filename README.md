@@ -69,10 +69,9 @@ This runs two services:
 Place your `.env` file (see Environment Variables above) next to `docker-compose.yml`.
 
 **Useful Scripts**
+- `npm run dev` run from source with tsx and reload on change.
 - `npm run lint` run ESLint.
 - `npm run compile` type-check only.
-- `npm run watch` start a reload loop for local development.
-- `npm run buildProd` compile and restart the PM2 process.
 
 **Claude Code Skills**
 The `general` and `voice` skills come from [Overmind](https://github.com/merph518/Overmind),
