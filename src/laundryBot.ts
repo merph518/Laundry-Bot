@@ -2,6 +2,7 @@ import "./env.js";
 import { dirname, importx } from "@discordx/importer";
 import { IntentsBitField } from "discord.js";
 import { Client } from "discordx";
+import { startHeartbeat } from "./services/heartbeat.js";
 import { startLaundryNotificationPoller } from "./services/laundryNotifications.js";
 import { startLaundryPresencePoller, updateLaundryPresence } from "./services/laundryPresence.js";
 import type { StopPoller } from "./services/poller.js";
@@ -19,7 +20,11 @@ bot.once("clientReady", async () => {
   try {
     await bot.guilds.fetch();
     await bot.initApplicationCommands();
-    stopPollers.push(startLaundryNotificationPoller(bot), startLaundryPresencePoller(bot));
+    stopPollers.push(
+      startLaundryNotificationPoller(bot),
+      startLaundryPresencePoller(bot),
+      startHeartbeat(bot),
+    );
     await updateLaundryPresence(bot);
     console.log("LaundryBot online.");
   } catch (error) {
