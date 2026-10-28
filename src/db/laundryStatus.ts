@@ -1,8 +1,8 @@
 import oracledb from "oracledb";
 import { DateTime } from "luxon";
+import { LOAD_DURATION_MINUTES } from "../config.js";
 import { withOracleConnection } from "./oracle.js";
-
-export const LOAD_DURATION_MINUTES = 85;
+import { LAUNDRY_STATUS, NOTIFICATION_STATUS } from "./statuses.js";
 
 export interface LaundryStatusRow {
   STATUS: string;
@@ -82,7 +82,7 @@ export async function markLaundryStarted(
 
     await connection.execute(
       `UPDATE LAUNDRY_STATUS
-      SET STATUS = 'in_use',
+      SET STATUS = :status,
         CURRENT_USER_ID = :userId,
         CURRENT_USER_NAME = :userName,
         STARTED_AT = :startedAt,
@@ -92,6 +92,7 @@ export async function markLaundryStarted(
         UPDATED_BY_NAME = :userName
       WHERE MACHINE_TYPE = 'laundry'`,
       {
+        status: LAUNDRY_STATUS.IN_USE,
         userId,
         userName,
         startedAt,
@@ -113,7 +114,7 @@ export async function markLaundryStarted(
         NOTES
       ) VALUES (
         'laundry',
-        'in_use',
+        :status,
         :userId,
         :userName,
         :startedAt,
@@ -123,6 +124,7 @@ export async function markLaundryStarted(
         :notes
       )`,
       {
+        status: LAUNDRY_STATUS.IN_USE,
         userId,
         userName,
         startedAt,
@@ -145,7 +147,7 @@ export async function markLaundryStarted(
           :channelId,
           :message,
           :dueAt,
-          'pending',
+          :status,
           :createdAt,
           :userId,
           :userName
@@ -154,6 +156,7 @@ export async function markLaundryStarted(
           channelId,
           message: "Laundry should be done now.",
           dueAt: expectedDoneAt,
+          status: NOTIFICATION_STATUS.PENDING,
           createdAt: startedAt,
           userId,
           userName,
@@ -180,7 +183,7 @@ export async function markLaundryCompleted(
 
     await connection.execute(
       `UPDATE LAUNDRY_STATUS
-      SET STATUS = 'available',
+      SET STATUS = :status,
         CURRENT_USER_ID = NULL,
         CURRENT_USER_NAME = NULL,
         STARTED_AT = NULL,
@@ -190,6 +193,7 @@ export async function markLaundryCompleted(
         UPDATED_BY_NAME = :updatedByName
       WHERE MACHINE_TYPE = 'laundry'`,
       {
+        status: LAUNDRY_STATUS.AVAILABLE,
         updatedAt: completedAt,
         updatedByName,
       },
@@ -209,7 +213,7 @@ export async function markLaundryCompleted(
         NOTES
       ) VALUES (
         'laundry',
-        'available',
+        :status,
         NULL,
         NULL,
         NULL,
@@ -220,6 +224,7 @@ export async function markLaundryCompleted(
         :notes
       )`,
       {
+        status: LAUNDRY_STATUS.AVAILABLE,
         endedAt: completedAt,
         updatedAt: completedAt,
         updatedByName,
@@ -249,11 +254,11 @@ export async function getPendingLaundryNotifications(
         MESSAGE,
         DUE_AT
       FROM LAUNDRY_NOTIFICATIONS
-      WHERE STATUS = 'pending'
+      WHERE STATUS = :status
         AND DUE_AT <= CURRENT_TIMESTAMP
       ORDER BY DUE_AT
       FETCH FIRST :limit ROWS ONLY`,
-      { limit },
+      { status: NOTIFICATION_STATUS.PENDING, limit },
       { outFormat: oracledb.OUT_FORMAT_OBJECT },
     );
 
@@ -268,10 +273,11 @@ export async function markLaundryNotificationSent(
   await withOracleConnection(async (connection) => {
     await connection.execute(
       `UPDATE LAUNDRY_NOTIFICATIONS
-      SET STATUS = 'sent',
+      SET STATUS = :status,
         SENT_AT = :sentAt
       WHERE ID = :id`,
       {
+        status: NOTIFICATION_STATUS.SENT,
         sentAt,
         id: notificationId,
       },
@@ -289,11 +295,12 @@ export async function markLaundryNotificationFailed(
   await withOracleConnection(async (connection) => {
     await connection.execute(
       `UPDATE LAUNDRY_NOTIFICATIONS
-      SET STATUS = 'failed',
+      SET STATUS = :status,
         SENT_AT = :failedAt,
         NOTES = :notes
       WHERE ID = :id`,
       {
+        status: NOTIFICATION_STATUS.FAILED,
         failedAt,
         notes: errorMessage,
         id: notificationId,
@@ -311,11 +318,13 @@ export async function cancelPendingLaundryNotifications(
   await withOracleConnection(async (connection) => {
     await connection.execute(
       `UPDATE LAUNDRY_NOTIFICATIONS
-      SET STATUS = 'failed',
+      SET STATUS = :cancelledStatus,
         SENT_AT = :cancelledAt,
         NOTES = :notes
-      WHERE STATUS = 'pending'`,
+      WHERE STATUS = :pendingStatus`,
       {
+        cancelledStatus: NOTIFICATION_STATUS.CANCELLED,
+        pendingStatus: NOTIFICATION_STATUS.PENDING,
         cancelledAt,
         notes: reason,
       },
@@ -369,7 +378,7 @@ export function buildLaundrySummary(row: LaundryStatusRow | null): LaundrySummar
   const updatedByName = row.UPDATED_BY_NAME ?? "Unknown";
   const updatedByUserId = row.UPDATED_BY_USER_ID ?? null;
 
-  if (row.STATUS === "maintenance") {
+  if (row.STATUS === LAUNDRY_STATUS.MAINTENANCE) {
     return {
       statusLine: "Laundry is unavailable (maintenance).",
       estimatedFreeBy: "Not available",
@@ -382,7 +391,7 @@ export function buildLaundrySummary(row: LaundryStatusRow | null): LaundrySummar
     };
   }
 
-  if (row.STATUS !== "in_use") {
+  if (row.STATUS !== LAUNDRY_STATUS.IN_USE) {
     return {
       statusLine: "",
       estimatedFreeBy: "Now",

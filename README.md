@@ -1,22 +1,19 @@
 # LaundryBot
 
 LaundryBot is an intentionally simple Discord bot that helps my family of six communicate laundry
-status. It tracks the current cycle, posts a live status card, and lets users complete help tasks
-through buttons and select menus. The bot stores status and help requests in Oracle DB
-tables and updates its presence with the current laundry state.
+status. It tracks the current cycle and posts a live status card with buttons. The bot stores
+status in Oracle DB tables and updates its presence with the current laundry state.
 
 **Features**
 - `/laundry` slash command that posts the interactive status card.
 - "I Flipped It" and "Mark Laundry Completed" buttons to update status.
-- "I Helped" flow with a select menu for resolving help tasks.
 - Automatic notifications when a laundry cycle should be done.
 - Presence updates reflecting the current availability and ETA.
 
 **Core Flow**
 1. Run `/laundry` to post the status card in the laundry channel.
 2. Click "I Flipped It" to start a cycle and schedule a notification.
-3. If help requests are active, use "I Helped" to resolve them.
-4. The bot edits its presence and keeps the status card current.
+3. The bot edits its presence and keeps the status card current.
 
 **Project Structure**
 - `src/laundryBot.ts` entrypoint and Discord client setup.
@@ -27,7 +24,7 @@ tables and updates its presence with the current laundry state.
 - `build` compiled output (do not edit directly).
 
 **Prerequisites**
-- Node.js `>=16` (see `package.json` engines).
+- Node.js `>=24` and npm `>=11` (see `package.json` engines).
 - Oracle DB access (tables defined in `db`).
 - Discord bot token and permissions to send and delete messages in the target channel.
 
@@ -63,16 +60,20 @@ docker compose up -d
 ```
 
 This runs two services:
-- `bot` the LaundryBot container, pulling `ghcr.io/mfagerstrom/laundrybot:latest`
-- `watchtower` polls for new image versions every 5 minutes and auto-updates the running container
+- `bot` the LaundryBot container, pulling `ghcr.io/merph518/laundry-bot:latest`
+- `watchtower` (the maintained `nickfedor/watchtower` fork) polls for new image versions every
+  5 minutes and auto-updates the running container
+
+The image has a `HEALTHCHECK`: the bot refreshes `/tmp/laundrybot.heartbeat` every 30 seconds while
+connected, and `docker ps` shows the container unhealthy when that stops. Docker does not restart an
+unhealthy container by itself.
 
 Place your `.env` file (see Environment Variables above) next to `docker-compose.yml`.
 
 **Useful Scripts**
+- `npm run dev` run from source with tsx and reload on change.
 - `npm run lint` run ESLint.
 - `npm run compile` type-check only.
-- `npm run watch` start a reload loop for local development.
-- `npm run buildProd` compile and restart the PM2 process.
 
 **Claude Code Skills**
 The `general` and `voice` skills come from [Overmind](https://github.com/merph518/Overmind),
