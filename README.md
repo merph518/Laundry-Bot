@@ -27,7 +27,7 @@ tables and updates its presence with the current laundry state.
 - `build` compiled output (do not edit directly).
 
 **Prerequisites**
-- Node.js `>=16` (see `package.json` engines).
+- Node.js `>=24` and npm `>=11` (see `package.json` engines).
 - Oracle DB access (tables defined in `db`).
 - Discord bot token and permissions to send and delete messages in the target channel.
 
