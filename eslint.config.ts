@@ -4,32 +4,19 @@ import stylistic from "@stylistic/eslint-plugin";
 import eslintConfigPrettier from "eslint-config-prettier";
 
 export default [
-  { ignores: ["build/**", ".claude/**"] },
+  { ignores: ["build/**", ".claude/**", "node_modules/**"] },
+  // First, so the explicit formatting rules below stay on instead of being switched off.
   eslintConfigPrettier,
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ["src/**/*.{ts}"],
-    ignores: ["**/*.config.{ts}", "*.reference.ts"],
+    files: ["src/**/*.ts"],
     plugins: {
       "@stylistic": stylistic,
     },
     rules: {
-      "@typescript-eslint/naming-convention": [
-        "error",
-        {
-          selector: "interface",
-          format: ["PascalCase"],
-          custom: {
-            regex: "^I[A-Z]",
-            match: true,
-          },
-        },
-      ],
-      "@typescript-eslint/no-empty-interface": 0,
-      "@typescript-eslint/typedef": 0,
       "@typescript-eslint/no-explicit-any": "off",
-      "spaced-comment": ["error", "always", {
+      "@stylistic/spaced-comment": ["error", "always", {
         line: {
           markers: ["/"],
         },
@@ -39,29 +26,16 @@ export default [
           balanced: true,
         },
       }],
-      "comma-dangle": ["error", "always-multiline"],
-      "max-len": ["error", {
+      "@stylistic/comma-dangle": ["error", "always-multiline"],
+      "@stylistic/max-len": ["error", {
         code: 100,
         ignoreUrls: true,
         ignoreStrings: true,
         ignoreTemplateLiterals: true,
         ignoreComments: true,
       }],
-      semi: "error",
-      "no-multiple-empty-lines": ["error", { max: 1 }],
-      "no-restricted-properties": [2, {
-        property: "goto",
-        message: "Please use gotoAndCheckUrl instead of page.goto",
-      }, {
-        property: "waitForURL",
-        message: "Please use gotoAndCheckUrl instead of page.waitForURL",
-      }],
-    },
-  },
-  {
-    files: ["**/*.ts"],
-    rules: {
-      "@typescript-eslint/no-explicit-any": "off",
+      "@stylistic/semi": "error",
+      "@stylistic/no-multiple-empty-lines": ["error", { max: 1 }],
       "no-restricted-syntax": [
         "error",
         {

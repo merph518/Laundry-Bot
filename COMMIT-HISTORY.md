@@ -1,3 +1,6 @@
+2026-10-28 - Commit ID: 91660fc - fix: make the ESLint rules apply to src and drop Playwright-only rules (#7)
+2026-10-28 - Commit ID: ff62a9e - chore: regenerate package-lock.json with npm 10 so CI npm ci passes (#5)
+2026-10-28 - Commit ID: 992c03a - chore: refresh COMMIT-HISTORY.md for fix/issue-6-pollers
 2026-10-28 - Commit ID: 7f48feb - fix: wait for in-flight ticks on shutdown and exit when startup fails (#6)
 2026-10-28 - Commit ID: ce07650 - chore: regenerate package-lock.json so npm ci passes (#5)
 2026-10-28 - Commit ID: b61e731 - chore: refresh COMMIT-HISTORY.md for fix/issue-6-pollers
