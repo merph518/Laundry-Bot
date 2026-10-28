@@ -22,7 +22,7 @@
     "@discordx/pagination": "^3.5.4",
     "@stylistic/eslint-plugin": "^5.6.1",
     "apicalypse": "^1.0.5",
-    "axios": "^1.7.7",
+    "axios": "^1.21.0",
     "cheerio": "^1.0.0",
     "discord.js": "^14.15.3",
     "discordx": "^11.11.1",
