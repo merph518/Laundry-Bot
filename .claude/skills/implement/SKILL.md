@@ -46,12 +46,12 @@ vendored copy pinned by `.claude/att-docs.lock`; never edit it here.
 | `<repo-constraints>` | Overrides, Section 4 |
 | `<test-accounts>` | Not used |
 | `<static-checks>` | `npm run lint` and `npm run compile`, each with a 30 second timeout, plus `scripts/overmind-check.sh`. The final pass is the same three |
-| `<pr-checks>` | None. The repository has no CI, so the static checks above are the only checks |
+| `<pr-checks>` | The `CI` workflow's `lint` and `compile` jobs, read with `gh pr checks <N>`. `scripts/overmind-check.sh` runs only locally |
 | `<test-dispatch>` | None. There is no test suite or runner; see Overrides, Section 6 |
 | `<test-run-rules>` | Not used |
 | `<shared-env>` | The Discord server and database the bot runs against. Nothing in this skill writes to them |
 | `<branch-age-note>` | Before the pull request, `git fetch origin` and merge `origin/main` when the branch is behind it |
-| `<run-watch>` | None. There are no runs to wait on; watch the pull request with `gh pr view` when the user says it merged |
+| `<run-watch>` | `gh pr checks <N> --watch` for the pull request's checks, run in the background; a merge is read with `gh pr view <N> --json state` when the user reports it |
 | `<baseline-rules>` | Not used |
 | `<artifact-read>` | Not used |
 | `<failure-snapshot>` | Not used |
@@ -123,8 +123,8 @@ includes this branch's commits.
 
 ### Section 9, the ready signal
 
-Once the pull request is open, the static checks have passed, and the self review
-has ended, add `Manual Review Needed` to the pull request with
+Once the pull request is open, its `lint` and `compile` checks have passed, and the
+self review has ended, add `Manual Review Needed` to the pull request with
 `gh pr edit <N> --add-label "Manual Review Needed"`, read it back, and end the
 report with:
 
