@@ -1,3 +1,5 @@
+2026-10-28 - Commit ID: 483d052 - chore: prune unused dependencies, move tooling to devDependencies (#9)
+2026-10-28 - Commit ID: 985dbe0 - chore: refresh COMMIT-HISTORY.md for chore/issue-8-node-24
 2026-10-28 - Commit ID: fc8b798 - chore: move to Node 24 LTS (#8)
 2026-10-28 - Commit ID: 4cb9bdb - chore: refresh COMMIT-HISTORY.md for fix/issue-7-eslint-config
 2026-10-28 - Commit ID: 91660fc - fix: make the ESLint rules apply to src and drop Playwright-only rules (#7)
