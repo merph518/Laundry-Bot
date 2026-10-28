@@ -1,6 +1,10 @@
+2026-10-28 - Commit ID: 45fb11a - fix: insert first-time users into LAUNDRY_USERS before starting a cycle (#5)
+2026-10-28 - Commit ID: 3004c40 - docs: implement extension names the CI lint and compile checks (#2)
+2026-10-28 - Commit ID: 049b25c - feat: vendor Overmind skills at v0.13.0 with LaundryBot extensions (#2)
 2026-07-17 - Commit ID: 81e236f - chore: fixed missing dependency
 2026-07-17 - Commit ID: d549b0a - chore: updated package lock
 2026-07-17 - Commit ID: 0c9ba48 - dockerized!
+2026-05-20 - Commit ID: 08cd08b - chore(deps): bump pm2 in the npm_and_yarn group across 1 directory
 2026-02-09 - Commit ID: f795fe3 - chore: removed help functionality
 2026-02-05 - Commit ID: 8ee276f - chore: updated readme
 2026-02-03 - Commit ID: 3ec8953 - fix: added service to keep the presence from expiring
