@@ -1,3 +1,5 @@
+2026-10-28 - Commit ID: 71a6278 - fix: pull the image name the publish workflow produces (#18)
+2026-10-28 - Commit ID: 2269daf - chore: refresh COMMIT-HISTORY.md for ci/issue-11-modernize-ci
 2026-10-28 - Commit ID: 54e5762 - ci: gate publishing on checks, harden workflows, add a container healthcheck (#11)
 2026-10-28 - Commit ID: 2474878 - chore: refresh COMMIT-HISTORY.md for chore/issue-10-tsx
 2026-10-28 - Commit ID: a09692c - chore: run from source with tsx and drop the pm2-era scripts (#10)
