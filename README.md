@@ -64,7 +64,12 @@ docker compose up -d
 
 This runs two services:
 - `bot` the LaundryBot container, pulling `ghcr.io/mfagerstrom/laundrybot:latest`
-- `watchtower` polls for new image versions every 5 minutes and auto-updates the running container
+- `watchtower` (the maintained `nickfedor/watchtower` fork) polls for new image versions every
+  5 minutes and auto-updates the running container
+
+The image has a `HEALTHCHECK`: the bot refreshes `/tmp/laundrybot.heartbeat` every 30 seconds while
+connected, and `docker ps` shows the container unhealthy when that stops. Docker does not restart an
+unhealthy container by itself.
 
 Place your `.env` file (see Environment Variables above) next to `docker-compose.yml`.
 
