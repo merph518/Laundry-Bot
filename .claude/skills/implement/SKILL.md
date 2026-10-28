@@ -27,7 +27,7 @@ vendored copy pinned by `.claude/att-docs.lock`; never edit it here.
 | `<label-script>` | `gh issue edit <N> --add-label "<label>"` or `--remove-label "<label>"`, then `gh issue view <N> --json labels --jq '[.labels[].name]'` |
 | `<labels-note>` | Overrides, Section 2 |
 | `<area-label-rule>` | None. LaundryBot has no area labels |
-| `<reference-docs>` | `AGENTS.md`, `README.md`, the table docs in `db/`, and the patterns in the reference bot under `/reference` |
+| `<reference-docs>` | `CLAUDE.md`, `README.md`, and the table definitions in `db/` |
 | `<ownership-unit>` | The commands, services, or tables the issue names |
 | `<ownership-rules>` | Overrides, Section 3 |
 | `<main-checkout>` | `~/Code/LaundryBot` |
@@ -45,7 +45,7 @@ vendored copy pinned by `.claude/att-docs.lock`; never edit it here.
 | `<writing-rules>` | Comments and log strings describe how the code works now, never name an issue, pull request, or session |
 | `<repo-constraints>` | Overrides, Section 4 |
 | `<test-accounts>` | Not used |
-| `<static-checks>` | `npm run lint` and `npm run compile`, each with a 30 second timeout, plus `scripts/overmind-check.sh`. The final pass is the same three |
+| `<static-checks>` | `npm run lint`, `npm run compile` and `npm test`, each with a 30 second timeout, plus `scripts/overmind-check.sh`. The final pass is the same three |
 | `<pr-checks>` | The `CI` workflow's `lint` and `compile` jobs, read with `gh pr checks <N>`. `scripts/overmind-check.sh` runs only locally |
 | `<test-dispatch>` | None. There is no test suite or runner; see Overrides, Section 6 |
 | `<test-run-rules>` | Not used |
@@ -63,7 +63,7 @@ vendored copy pinned by `.claude/att-docs.lock`; never edit it here.
 | `<self-review>` | The `code-review` skill on the pull request number, at most three passes, fixing real bugs and noting nitpicks in the body |
 | `<ready-signal>` | Overrides, Section 9 |
 | `<skip-ledger>` | Not used |
-| `<instructions-file>` | `AGENTS.md` |
+| `<instructions-file>` | `CLAUDE.md` |
 | `<post-merge-checks>` | None |
 | `<pairing>` | None |
 | `<merge-cleanup>` | The desktop app removes the worktree when the session is archived |
@@ -94,7 +94,7 @@ Push it with `git push -u origin <branch>` so the upstream is the new branch, no
 
 ### Section 4, constraints
 
-Every change follows `AGENTS.md` and `eslint.config.ts`. These are the rules that
+Every change follows `CLAUDE.md` and `eslint.config.ts`. These are the rules that
 keep coming up:
 
 - Never edit an existing `.sql` file. Add a new one named `YYYYMMDD_name.sql` with
@@ -104,7 +104,7 @@ keep coming up:
 - Slash command options list every required option before any optional one.
 - Import or define every helper before it is used, and leave no unused imports or
   variables behind.
-- Never edit or delete `build/`.
+- Never edit `build/`; it is generated and ignored by git.
 - Put shared values and flags in a central helper instead of repeating them.
 - Never edit `.claude/att-docs/`. Move the pin with `scripts/overmind-sync.sh <tag>`.
 
@@ -115,11 +115,6 @@ this: after every changeset, run `npm run lint` and `npm run compile`, each with
 30 second timeout, and fix what they report. Do not start the bot. The user runs it
 themselves, so the final report says that no runtime check was run and lists what
 the user should try in Discord to see the change working.
-
-### Section 7, the pull request
-
-Before opening the pull request, update `COMMIT-HISTORY.md` from `git log` so it
-includes this branch's commits.
 
 ### Section 9, the ready signal
 
@@ -138,10 +133,9 @@ Withhold both while any static check is red or the self review loop is still goi
 
 - `npm run lint` and `npm run compile` pass, each within a 30 second timeout.
 - `scripts/overmind-check.sh` passes.
-- `COMMIT-HISTORY.md` includes the branch's commits.
 
 ## Repository notes
 
-- [AGENTS.md](../../../AGENTS.md): the standing rules for this repository.
+- [CLAUDE.md](../../../CLAUDE.md): the standing rules for this repository. `AGENTS.md` links to it.
 - [implement-with-speech](../implement-with-speech/SKILL.md): this skill with
   spoken replies.

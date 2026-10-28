@@ -1,17 +1,9 @@
-import {
-  type ButtonInteraction,
-  type CommandInteraction,
-  MessageFlags,
-  type StringSelectMenuInteraction,
-} from "discord.js";
+import { type ButtonInteraction, type CommandInteraction, MessageFlags } from "discord.js";
 
 const UNKNOWN_INTERACTION_CODE = 10062;
 const GENERIC_ERROR_MESSAGE = "Something went wrong. Please try again.";
 
-type DeferrableInteraction =
-  | CommandInteraction
-  | ButtonInteraction
-  | StringSelectMenuInteraction;
+type DeferrableInteraction = CommandInteraction | ButtonInteraction;
 
 interface InteractionOptions {
   // Only the user who triggered the interaction sees the reply.
