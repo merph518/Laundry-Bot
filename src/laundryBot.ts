@@ -2,6 +2,7 @@ import "./env.js";
 import { dirname, importx } from "@discordx/importer";
 import { IntentsBitField } from "discord.js";
 import { Client } from "discordx";
+import { closeOraclePool } from "./db/oracle.js";
 import { startHeartbeat } from "./services/heartbeat.js";
 import { startLaundryNotificationPoller } from "./services/laundryNotifications.js";
 import { startLaundryPresencePoller, updateLaundryPresence } from "./services/laundryPresence.js";
@@ -66,6 +67,7 @@ async function shutdown(signal: string): Promise<void> {
   await Promise.race([drained, timedOut]);
 
   await bot.destroy();
+  await closeOraclePool();
   process.exit(0);
 }
 
