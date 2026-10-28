@@ -17,9 +17,8 @@ export function startLaundryPresencePoller(client: Client): StopPoller {
     () => updateLaundryPresence(client, true),
   );
 
-  return () => {
-    stopRefresh();
-    stopForcedRefresh();
+  return async () => {
+    await Promise.all([stopRefresh(), stopForcedRefresh()]);
   };
 }
 
