@@ -48,6 +48,24 @@ export async function getLaundryStatus(): Promise<LaundryStatusRow | null> {
   });
 }
 
+// LAUNDRY_STATUS and LAUNDRY_STATUS_HISTORY reference LAUNDRY_USERS, so a first-time user is
+// inserted before any row that names them. Existing rows are left untouched.
+async function ensureLaundryUser(
+  connection: oracledb.Connection,
+  userId: string,
+  userName: string,
+): Promise<void> {
+  await connection.execute(
+    `MERGE INTO LAUNDRY_USERS u
+    USING (SELECT :userId AS DISCORD_USER_ID, :userName AS DISPLAY_NAME FROM DUAL) s
+    ON (u.DISCORD_USER_ID = s.DISCORD_USER_ID)
+    WHEN NOT MATCHED THEN
+      INSERT (DISCORD_USER_ID, DISPLAY_NAME)
+      VALUES (s.DISCORD_USER_ID, s.DISPLAY_NAME)`,
+    { userId, userName },
+  );
+}
+
 export async function markLaundryStarted(
   userId: string,
   userName: string,
@@ -59,6 +77,8 @@ export async function markLaundryStarted(
       .plus({ minutes: LOAD_DURATION_MINUTES })
       .toJSDate();
     let notificationId: number | null = null;
+
+    await ensureLaundryUser(connection, userId, userName);
 
     await connection.execute(
       `UPDATE LAUNDRY_STATUS
