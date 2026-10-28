@@ -1,3 +1,5 @@
+2026-10-28 - Commit ID: 8ce1582 - chore: remove the help-request feature and record cancelled notifications (#14)
+2026-10-28 - Commit ID: dd0a7b0 - chore: refresh COMMIT-HISTORY.md for perf/issue-13-oracle-pool
 2026-10-28 - Commit ID: 5a080fd - perf: use an Oracle connection pool instead of one connection per query (#13)
 2026-10-28 - Commit ID: b5484af - chore: refresh COMMIT-HISTORY.md for refactor/issue-12-centralize
 2026-10-28 - Commit ID: 4d0201d - refactor: centralize interaction handling, card refresh, IDs and config (#12)
