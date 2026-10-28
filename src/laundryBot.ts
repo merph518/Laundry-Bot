@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./env.js";
 import { dirname, importx } from "@discordx/importer";
 import { IntentsBitField } from "discord.js";
 import { Client } from "discordx";
