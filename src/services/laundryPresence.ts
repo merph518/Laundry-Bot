@@ -1,21 +1,25 @@
 import { ActivityType, Client } from "discord.js";
 import { DateTime } from "luxon";
 import { buildLaundrySummary, getLaundryStatus } from "../db/laundryStatus.js";
+import { startPoller, type StopPoller } from "./poller.js";
 
 const PRESENCE_INTERVAL_MS = 30_000;
 const PRESENCE_FORCE_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
 let lastPresenceText = "";
 
-export function startLaundryPresencePoller(client: Client): NodeJS.Timeout {
-  const poller = setInterval(() => {
-    void updateLaundryPresence(client);
-  }, PRESENCE_INTERVAL_MS);
+export function startLaundryPresencePoller(client: Client): StopPoller {
+  const stopRefresh = startPoller("laundry-presence", PRESENCE_INTERVAL_MS, () => (
+    updateLaundryPresence(client)
+  ));
+  const stopForcedRefresh = startPoller(
+    "laundry-presence-forced",
+    PRESENCE_FORCE_REFRESH_INTERVAL_MS,
+    () => updateLaundryPresence(client, true),
+  );
 
-  setInterval(() => {
-    void updateLaundryPresence(client, true);
-  }, PRESENCE_FORCE_REFRESH_INTERVAL_MS);
-
-  return poller;
+  return async () => {
+    await Promise.all([stopRefresh(), stopForcedRefresh()]);
+  };
 }
 
 export async function updateLaundryPresence(client: Client, force = false): Promise<void> {
