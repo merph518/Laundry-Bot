@@ -33,19 +33,6 @@ jobs:
     runs-on: [self-hosted, Windows, ci]
     timeout-minutes: 15
     steps:
-      - name: Check the inputs
-        shell: pwsh
-        env:
-          SQL_FILE: ${{ inputs.sql_file }}
-          ENV_FILE: ${{ inputs.env_file }}
-        run: |
-          if ($env:SQL_FILE -notmatch '^db/[A-Za-z0-9_]+\.sql$') {
-            throw "sql_file must look like db/<name>.sql."
-          }
-          if (-not (Test-Path -LiteralPath $env:ENV_FILE -PathType Leaf)) {
-            throw "The env file was not found on this runner: $env:ENV_FILE"
-          }
-
       - name: Checkout
         uses: actions/checkout@v7
         with:
@@ -57,10 +44,12 @@ jobs:
           node-version: 24
 
       - name: Install dependencies
+        shell: cmd
         run: npm ci --no-audit --no-fund
 
       - name: Run the SQL file
+        shell: cmd
         env:
           SQL_FILE: ${{ inputs.sql_file }}
           ENV_FILE: ${{ inputs.env_file }}
-        run: npx tsx src/scripts/runSql.ts "$env:ENV_FILE" "$env:SQL_FILE"
+        run: npx tsx src/scripts/runSql.ts "%ENV_FILE%" "%SQL_FILE%"

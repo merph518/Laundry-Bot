@@ -9,6 +9,9 @@ if (!envFile || !sqlFile) {
   process.exit(2);
 }
 
+// Only files in db/ run, so a dispatch input cannot point the script at another file.
+const SQL_FILE_PATTERN = /^db\/[A-Za-z0-9_]+\.sql$/;
+
 // Splits a migration into statements. It drops whole-line comments and splits on ";", so a
 // semicolon inside a string literal is not supported.
 function splitStatements(sql: string): string[] {
@@ -20,6 +23,10 @@ function splitStatements(sql: string): string[] {
 }
 
 async function main(): Promise<void> {
+  if (!SQL_FILE_PATTERN.test(sqlFile)) {
+    throw new Error("sql_file must look like db/<name>.sql.");
+  }
+
   const env = dotenv.parse(readFileSync(envFile));
   const user = env.ORACLE_USER;
   const password = env.ORACLE_PASSWORD;
