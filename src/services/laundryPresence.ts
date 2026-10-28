@@ -41,7 +41,7 @@ export async function updateLaundryPresence(client: Client, force = false): Prom
   }
 }
 
-function buildPresenceText(
+export function buildPresenceText(
   statusKey: "available" | "busy" | "maintenance" | "unknown",
   estimatedFreeByDate: Date | null,
 ): string {
