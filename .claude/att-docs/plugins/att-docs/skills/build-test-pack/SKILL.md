@@ -262,18 +262,42 @@ phases left. Without `--resume` a job starts over from intake.
 
 Phase 9 runs as four steps, each saved when it passes: `phase9-checklist`
 (issues, coverage rows, assumptions, the fix rounds), `phase9-confidence` (the
-overall level and each field of the assessment, one call per field), `phase9-senior`
-(the senior review and tester notes, written last), and `phase9-revalidate` (the rebuild and
-the revalidation). Each call thinks through one part of the review, and a job
-resumed in Phase 9 keeps the steps that passed.
+overall level and each field of the assessment, one call per field),
+`phase9-senior` (the senior review and tester notes, written last), and
+`phase9-revalidate` (the rebuild and the revalidation). Each call thinks through
+one part of the review, and a job resumed in Phase 9 keeps the steps that
+passed.
 
 A reasoning call can think for up to `model.reasoningOutput` tokens (40,960 by
 default), which takes well over an hour at local generation speeds, inside a
-`model.context` of 153,600 tokens, so a call waits up to `model.timeoutMinutes`
-(150 by default). The model server's context has to be at least
-`model.context`, and its own request time-out at least `model.timeoutMinutes`,
-or the server ends the reply early and the call fails with `no-reply`. A call
-that fails while thinking is retried once with thinking off.
+`model.context` of 128,000 tokens by default, so a call waits up to
+`model.timeoutMinutes` (150 by default). The model server's context has to be at
+least `model.context` (128000 by default; a `pipeline.json` can change it), and
+its own request time-out at least `model.timeoutMinutes`, or the server ends the
+reply early and the call fails with `no-reply`. A window smaller than
+`model.context` may not show up as an error at all: the server runs with context
+shift on, so it can drop the start of a prompt that is too long and answer
+anyway. A call that fails while thinking is retried once with thinking off.
+
+Lemonade keeps the model's window as a saved recipe option on the user model,
+not in `/etc/lemonade` or the systemd unit. In the commands below, `<endpoint>`
+is `model.endpoint` (for example `http://localhost:13305/api/v1`) and `<model name>` is
+`model.name` in the pipeline config.
+
+- To check the saved window, run `curl -s <endpoint>/models/<model name>` and
+  read `recipe_options.ctx_size`. It works whether or not the model is loaded.
+  To see what a loaded model is running with, read `recipe_options.ctx_size` in
+  the matching `model_name` entry of `all_models_loaded` in `<endpoint>/health`;
+  that list is empty when no model is loaded.
+- To set it, load the model with the window saved:
+
+        curl -sS --fail-with-body -X POST <endpoint>/load -H 'content-type: application/json' \
+          -d '{"model_name":"<model name>","ctx_size":<model.context>,"llamacpp_backend":"<saved backend>","llamacpp_args":"<saved args>","save_options":true}'
+
+  Take the backend and args from the model's saved `recipe_options`, carrying
+  over every key it has and leaving out one that is not saved, because saving
+  may replace the stored options. A rejected load prints the server's error and
+  exits non-zero. The load reloads the model, so do it when no build is running.
 
 A job takes an hour or more, so a request made during the day is queued.
 `local/systemd/` holds a user timer that starts `queue run` at 22:00; the queue
@@ -467,15 +491,50 @@ queued. A source is one of:
 A job line is `<issue>`, `<issue> <change>`, `suite <code>`, or the full
 `queue add` form, such as `--issue 9415 --doc <path>`. Blank lines and lines
 that start with `#` are skipped, and a line that is not a job is counted and
-skipped. Jobs queued this way skip the `check` gates, so a job whose
-documents have no usable rules fails at intake, retries once, and is dropped with
-a gate reason code (for example `gate:rules-not-extracted`);
+skipped. Jobs queued this way are not checked when they are queued, so the
+pre-check below is what catches a bad one before the night. A job whose
+documents have no usable rules otherwise fails at intake, retries once, and is
+dropped with a gate reason code (for example `gate:rules-not-extracted`);
 the report shows it. A job already in the queue file in any state (waiting, passed, failed
 or removed) is never queued again, so a list can stay in the folder after its
 jobs have run. `queue fill` does the same read by hand and prints which jobs it
 queued, how many it already knew, and which sources it could not read. A source
 that lists every record in the repository queues every one of them the first
 time, so point a `records` source at the open ones.
+
+**The queue is checked at 18:00.** `queue check` changes nothing in the
+queue. It runs the `check` input gates, with no model call, on every waiting
+issue row and on every job the sources would queue tonight, and writes the
+lines to `precheck.txt` in the pipeline output folder: a `checked <local time>`
+line, a `sources` line with the counts `queue fill` would print, then one line
+per input, `<job-id>  <input>  present|missing  <code>`, with the codes
+`check` prints. The sources are read, not filled, so a source line fixed after
+the check still counts at the nightly fill. A suite row reads
+`<job-id>  suite  refused`, since `check` takes issue jobs only. A row queued
+without `--doc` reads `rules  unchecked` when the document index has
+candidates, and `documents  missing  no-candidates` when it has none. A row
+still marked running while no run holds the queue reads `running  stale-row`
+and is checked too: the nightly run counts it as a failed try, `interrupted`,
+and takes it again. On its last try that settle drops it instead, so it reads
+`running  stale-row-dropped` and is not checked. A row whose check throws reads
+`check  failed  <error name>`, and a queue file that does not parse ends the
+lines with `precheck  failed  <error name>`.
+
+A run that holds the queue is waited for, up to an hour; after that the file
+reads `queue  held  precheck-skipped`, and a run that takes the queue mid-check
+stops it before the next row with `queue  held  precheck-stopped`; a rule
+export already going finishes first. While the check runs the file
+reads `precheck  running`, and the final `checked` time is when the queue
+was read, after any wait. A check stopped part way never leaves the last
+day's lines standing. The exit code is like `check`'s: 1 when an input is
+missing, a source could not be read, a check or the pre-check failed, or the
+queue stayed held, and 3 when some rows' rules went unchecked; the unit fails
+on 1 only.
+`local/systemd/build-pack-check.timer` starts it at 18:00, four hours before
+the nightly run at the default `queue.start`, so a job with a missing input can
+be fixed or removed with `queue remove` first; a host with an earlier
+`queue.start` moves the timer to match. A check the machine slept through is
+not made up.
 
 **A failed job tries once more.** The first time a job fails, its row goes back
 to waiting with the failure kept (phase and reason code). A job that failed
@@ -545,19 +604,24 @@ half an hour after the queue's default cutoff.
   so it is retried like any other failure; only a pipeline process that died
   itself leaves an `interrupted` row. After a restart, the server's context size
   and request time-out must still be at least `model.context` and
-  `model.timeoutMinutes`.
+  `model.timeoutMinutes`. Lemonade keeps the window as a saved recipe option on
+  the model, so read `recipe_options.ctx_size` from
+  `<endpoint>/models/<model name>` (`<endpoint>` and `<model name>` as defined
+  above) to confirm it is still at least
+  `model.context`; `/health` shows nothing until the model is loaded.
 - Move the timer to another host. On the new host install the repository, the
   model server, the pipeline config and the env file at
   `~/.config/build-pack/env`, then copy `build-pack.service`, `build-pack.timer`,
+  `build-pack-check.service`, `build-pack-check.timer`,
   `build-pack-report.service` and `build-pack-report.timer` to
   `~/.config/systemd/user/` and run `systemctl --user daemon-reload` and
-  `systemctl --user enable --now build-pack.timer build-pack-report.timer`. Run
+  `systemctl --user enable --now build-pack.timer build-pack-check.timer build-pack-report.timer`. Run
   `loginctl enable-linger <user>` on the new host as well, or user timers stop
   when that user logs out and the night's run never starts. Copy the queue file
   (`queue.file`) and the pipeline's output folder (the jobs' status logs and the
   reports) from the old host so the queue and its history carry over, and run
   `queue status` for a waiting job to check it is read. Then
-  `systemctl --user disable --now build-pack.timer build-pack-report.timer` on
+  `systemctl --user disable --now build-pack.timer build-pack-check.timer build-pack-report.timer` on
   the old host. Two hosts with the timer on would build the same jobs twice,
   since the queue lock is per host.
 

@@ -9,6 +9,20 @@ description: >-
 
 # Implement
 
+## Applies to every pull request
+
+This procedure is the standard for every pull request here, including documentation,
+script and skill changes that start from no issue and sessions that were never asked to
+implement one. `CLAUDE.md` at the root says so for every session.
+
+A change with no issue skips the steps that need one: reading and claiming it, `issue-<N>`
+in the branch name, `(#<N>)` in the title, `Closes #<N>`, the `Blocked` label on the
+issue, and closing it after the merge. Name the branch `<type>/<slug>`, and treat the
+folders from the `<ownership-unit>` row that hold the files the change touches as the
+ownership unit when reading the board. The worktree (Section 3), the non-draft pull
+request, the self review loop, and the `Manual Review Needed` label (Section 7) hold for
+every pull request.
+
 ## Base
 
 Read [the general skill](../../../plugins/general/skills/implement/SKILL.md), which lives in this repository rather than in a vendored copy, first and follow it, except where this file overrides it.
@@ -46,7 +60,7 @@ reply text: the user does not see it there.**
 | `<repo-constraints>` | None beyond the writing rules and the README rule under Repository notes |
 | `<test-accounts>` | Not applicable here, because there are no test accounts |
 | `<static-checks>` | Local checks, under Overrides, Section 5 |
-| `<pr-checks>` | None yet: there is no `ci.yml`. Static checks are local |
+| `<pr-checks>` | The `test-all` job in `.github/workflows/ci.yml` runs every test and the static checks on a pull request and again on each push to its branch. The ready signal waits for it, under Overrides, Section 7, Ready signal. This replaces the general skill's wording that a pull request check runs static checks only: the local runs in Section 6 still go green before the pull request opens |
 | `<test-dispatch>` | Not applicable here, because nothing is dispatched. Tests run locally, under Overrides, Section 6 |
 | `<test-run-rules>` | Not applicable here, because there are no test families or run counts |
 | `<shared-env>` | Not applicable here, because there is no shared test environment |
@@ -63,12 +77,29 @@ reply text: the user does not see it there.**
 | `<self-review>` | Under Overrides, Section 7 |
 | `<ready-signal>` | Under Overrides, Section 7, Ready signal. A pull request reported ready carries `Manual Review Needed`, read back |
 | `<skip-ledger>` | Not applicable here, because there is no skip ledger |
-| `<instructions-file>` | None: Overmind has no `CLAUDE.md`. The `README.md` is the standing reference |
-| `<post-merge-checks>` | None |
+| `<instructions-file>` | `CLAUDE.md` at the root, for the rule that every pull request follows this procedure. `README.md` for the layout and the extension contract |
+| `<post-merge-checks>` | The post-merge pin, under Added gates. It runs after the merge, not before the pull request is ready |
 | `<pairing>` | None |
 | `<merge-cleanup>` | Nothing runs automatically. Removing the worktree after the merge, with `git worktree remove` from the main checkout, is the user's |
 
 ## Overrides
+
+### Models
+
+Each step has one model:
+
+| Step | Model |
+| --- | --- |
+| Planning and design advice, before any code is written | Opus |
+| Writing the code and its tests | Sonnet |
+| Reviewing every change, including the last fix | Opus |
+| Fixing review findings | Sonnet |
+
+Before coding, spawn an Opus agent with the issue or task and the files it touches, and
+ask it for the plan and design advice: the approach, the files to change, and the risks.
+Sonnet implements from that advice and records in the pull request body, under Judgment
+calls, any place it departed from it. A fix for a review finding is written by Sonnet, then
+reviewed by Opus.
 
 ### Section 2, labels
 
@@ -125,7 +156,8 @@ pull request bodies) in files in the session's scratchpad directory.
 
 ### Section 5, static checks
 
-There are no CI checks, so these run locally on the changed files before every commit:
+These run locally on the changed files before every commit, so a push does not wait on
+CI to find what a local check would have shown:
 
 - Every changed JSON file parses: `python3 -m json.tool <file>`.
 - `node --check <file>` on each changed `.mjs` or `.js` file.
@@ -172,7 +204,8 @@ A diff with no executable code (Markdown, JSON data) runs no test; the report sa
   `gh api -X PATCH repos/merph518/Overmind/pulls/<n> -F "body=@<file>"`.
 - Mergeability: `gh pr view <n> --json mergeable,mergeStateStatus`. Resolve a conflict by
   merging `origin/main` into the branch, never by rebase plus force-push.
-- Self review: Sonnet implements and Opus reviews every change, including the final fix.
+- Self review: Sonnet implements and fixes, and Opus reviews every change, including the
+  final fix (see Models above).
   Spawn an Opus review agent on the diff, and run the `code-review` skill on the pull
   request number. Fix real findings and review again, for at most three passes. The
   fixes from the last pass still get an Opus review before the pull request is marked
@@ -181,7 +214,42 @@ A diff with no executable code (Markdown, JSON data) runs no test; the report sa
   fix, and say in the report that the loop ran past three passes. A fifth pass that
   still finds a real bug stops the work and asks through `AskUserQuestion`.
 - Ready signal: never leave the pull request in draft. When the loop ends, mark it ready
-  with `gh pr ready <n>`, add the label through the issues endpoint, and read it back:
+  with `gh pr ready <n>`. The label is added only when every check on the pull request has
+  passed on the current head. A read right after a push or a merge of `origin/main` can
+  still show the previous commit's result, so first confirm the pull request's head is the
+  commit pushed. Write the local commit to a file in the scratchpad, then compare it with
+  the pull request's head every ten seconds for two minutes, in a background command that
+  has no command substitution:
+
+  ```bash
+  git rev-parse HEAD > <scratchpad>/head.txt
+  for i in {1..12}; do gh pr view <n> --json headRefOid --jq .headRefOid | grep -qxFf <scratchpad>/head.txt && { echo matched; break; }; sleep 10; done
+  ```
+
+  If it never prints `matched`, check that the push landed (`git status -sb`) and push it,
+  or ask through `AskUserQuestion`.
+
+  Then wait while any check is pending, or while none is reported yet, with a background
+  command that has no command substitution and stops after thirty minutes:
+
+  ```bash
+  for i in {1..30}; do gh pr checks <n> 2>&1 | grep -Eq 'pending|no checks reported' || break; sleep 60; done; gh pr checks <n>
+  ```
+
+  If the thirty minutes pass with a check still pending or none reported (a conflict, a
+  skipped run, or offline runners keep a run from starting), stop waiting and ask through
+  `AskUserQuestion`. Merging `origin/main` into the branch, or any push, starts the checks
+  again, so the head check and the wait repeat after it.
+
+  A check that fails is a real failure to fix, then Opus reviews the fix and it is pushed
+  like any other fix; the label stays off until the rerun passes. This holds for a docs-only
+  branch too, because `test-all` runs the whole suite on every pull request: a failure
+  already on `main` is fixed here, and the body's Verification reports the CI result. A
+  check that reads `cancel` (a newer push cancels the older run, and a run past its timeout
+  reads the same) is not a pass: when the head is current, rerun it once with
+  `gh run rerun <run-id>`, and ask through `AskUserQuestion` if it cancels again. Once
+  every check reads `pass` on the current head, add the label through the issues endpoint
+  and read it back:
 
   ```bash
   gh api repos/merph518/Overmind/issues/<n>/labels -f "labels[]=Manual Review Needed"
@@ -189,10 +257,11 @@ A diff with no executable code (Markdown, JSON data) runs no test; the report sa
   ```
 
   A report that calls a pull request ready without the label reading back is wrong; fix
-  the label first. A commit pushed after the label is a new change: remove the label with
+  the label first. A label on this session's own pull request whose checks are pending or
+  red is wrong too: remove it. A commit pushed after the label is a new change: remove the label with
   `gh api -X DELETE repos/merph518/Overmind/issues/<n>/labels/Manual%20Review%20Needed`
   (a 404 means it was not on yet) and add it again only once the review of that commit
-  is clean.
+  is clean and its checks have passed.
 - Ready check: at the start of every pass of a loop over issues, and before any final
   report, list the open pull requests that are not drafts and lack the label:
 
@@ -200,10 +269,15 @@ A diff with no executable code (Markdown, JSON data) runs no test; the report sa
   gh pr list --state open --limit 200 --json number,isDraft,labels --jq '[.[] | select(.isDraft | not) | select(any(.labels[]; .name == "Manual Review Needed") | not) | .number]'
   ```
 
-  Label this session's own pull request on that list once its review is clean. Report
-  another session's only when its body already has a `Self review` section and no
-  session holds it (`ListAgents`, the issue's `In Progress` label); one still in review
-  is not yet ready.
+  Label this session's own pull request on that list once its review is clean and its
+  checks have passed. Report another session's only when its body already has a
+  `Self review` section and no session holds it (`ListAgents`, the issue's `In Progress`
+  label); one still in review is not yet ready. Before any final report, also read
+  `gh pr checks` for each of this session's own labeled pull requests, since a later
+  "Update branch" merge or push can turn one red, and remove the label from one that is
+  not passing. In a loop over issues, the wait runs in the background while the loop works
+  the next issue; the next pass's ready check picks the pull request up when its checks
+  finish.
 
 ## Added gates
 
@@ -230,6 +304,58 @@ confirm the names and labels with
 and before opening the pull request run `grep -rn runs-on .github/workflows` and check
 every line against this rule. Only one session edits the workflows at a time: read the
 open pull requests' files first, per Section 3.
+
+### Post-merge pin
+
+A pull request that changes functionality ends with a pin cut and a pin-bump pull
+request in every repository that pins Overmind. The step runs after the merge, from the
+wait in `<run-watch>`, for a pull request with or without an issue, and the work is not
+done until it finishes or is skipped.
+
+- **Skip** a pull request whose diff is only documentation (`README.md`, `docs/`, other
+  Markdown that no skill reads) or only tests. A change to a `SKILL.md`, a script, a
+  hook, the bridge, a workflow, or a `plugin.json` changes functionality. Say in the
+  final report that the step was skipped and why.
+- **Cut the pin.** A pin is a release tag, and this session never tags. First read the
+  newest tag with `git ls-remote --tags --sort=-v:refname origin 'v*'`, taking the first
+  line that does not end in `^{}` and never using `gh release view`, because a tag can
+  exist without a GitHub release. Keep it as the tag from before the merge. Then read
+  the release workflow's run on the merge commit
+  (`gh run list --workflow release.yml --commit <merge sha> --json conclusion,status,url`),
+  waiting until that run appears and has finished or shows `skipped`. A `cancelled` run
+  is reported to the user with its link: stop there, open no bump pull request, and take
+  neither branch below. For any other result, take the branch that fits:
+  - The workflow ran. Look for the open release pull request with
+    `gh pr list --state open --head release-please--branches--main --json number,title`.
+    When it lists this pull request in its changelog, ask the user through
+    `AskUserQuestion` to merge it, because this skill never merges. When there is none,
+    or it does not list this pull request, because the change merged as a type
+    release-please ignores (it reads only `feat`, `fix` and `perf`), report that no pin
+    was cut and why, and open no bump pull request. A failed run is reported the same
+    way, with the run's link.
+  - The workflow is skipped. The tag is cut by hand, an exception to the README's rule
+    that holds only while the workflow is off, and any release pull request left open is
+    ignored: ask the user through `AskUserQuestion` to cut it.
+
+  After the user was asked to merge the release pull request or to cut the tag, open no
+  bump pull request until the newest tag is above the one from before the merge.
+- **Find every repository that pins Overmind.** List the owner's repositories with
+  `gh repo list merph518 --no-archived --limit 100 --json name --jq '.[].name'` (raise the
+  limit when it returns 100 names) and keep each one whose lock names Overmind:
+  `gh api repos/merph518/<name>/contents/.claude/att-docs.lock -H "Accept: application/vnd.github.raw"`
+  has a `repo=` line naming `merph518/Overmind` or an earlier location of it. A 404 means
+  the repository does not pin Overmind. Read the list fresh each time.
+- **Open one pin-bump pull request per repository.** This session cannot write outside
+  its own worktree, so each bump is handed to a session started in that repository, or to
+  the user. That session runs its own implement procedure, including its self review
+  loop, an Opus review, and the ready label: `scripts/overmind-sync.sh <new tag>`, then
+  `scripts/overmind-check.sh`, a `chore:` commit, and a pull request that names the tag
+  and the Overmind pull request. When the new tag crosses a minor version, it checks
+  its extension first, per the README's Releases section. Nothing merges and nothing
+  pushes to a repository's `main`.
+- **Report** the tag and each repository with its bump pull request number or the
+  session it was handed to. A repository whose sync or check fails is reported with the
+  failing command, and the others still go ahead.
 
 ### Releases
 
